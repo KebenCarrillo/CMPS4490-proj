@@ -64,8 +64,10 @@ public:
     }
 //Outerspace Background:
 //https://opengameart.org/content/space-backgrounds-0
-} img("/home/stu/lmoreno/4490/proj/space.png"), 
-  sprite("/home/stu/lmoreno/4490/proj/greyspaceship.png");
+} //img("/home/stu/lmoreno/4490/proj/space.png"), 
+  //sprite("/home/stu/lmoreno/4490/proj/greyspaceship.png")
+  img("/home/stu/kcarrillo/4490/proj/space.png"),
+  sprite("/home/stu/kcarrillo/4490/proj/greyspaceship.png");
   //planet("/home/stu/kcarrillo/4490/proj/planet.png");
 
 typedef float Flt;
