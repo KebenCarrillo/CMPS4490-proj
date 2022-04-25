@@ -64,10 +64,11 @@ public:
     }
 //Outerspace Background:
 //https://opengameart.org/content/space-backgrounds-0
-} //img("/home/stu/lmoreno/4490/proj/space.png"), 
-  //sprite("/home/stu/lmoreno/4490/proj/greyspaceship.png")
-  img("/home/stu/kcarrillo/4490/proj/space.png"),
-  sprite("/home/stu/kcarrillo/4490/proj/greyspaceship.png");
+} //img("/home/stu/lmoreno/4490/proj/CMPS4490-proj/space.png"), 
+  //sprite("/home/stu/lmoreno/4490/proj/CMPS4490-proj/greyspaceship.png")
+  img("/home/stu/kcarrillo/4490/proj/CMPS4490-proj/space.png"),
+  sprite("/home/stu/kcarrillo/4490/proj/CMPS4490-proj/spaceship.png"),
+  blackhole("/home/stu/kcarrillo/4490/proj/CMPS4490-proj/blackhole.png");
   //planet("/home/stu/kcarrillo/4490/proj/planet.png");
 
 typedef float Flt;
@@ -120,6 +121,7 @@ class Global {
 public:
 	int xres, yres;
     Ship ship[2];
+    Ship blhole[2];
     // the box components
     float pos[2];
     Point p[4];
@@ -139,8 +141,10 @@ public:
     unsigned int texid;
     unsigned int spriteid;
     unsigned int plid;
+    unsigned int bhid;
     Flt gravity;
     int frameno;
+
     Global();
 } g;
 
@@ -422,7 +426,7 @@ int X11_wrapper::check_keys(XEvent *e)
                 if (g.state == STATE_INTRO) {
                     g.state = STATE_PLAY;
                     g.starttime = time(NULL);
-                    g.playtime = 10;
+                    g.playtime = 25;
                 }
 				break;
             case XK_2:
@@ -465,7 +469,7 @@ unsigned char *buildAlphaData(Image *img)
         //*(ptr+3) = d;
         //-----------------------------------------------
         //this code optimizes the commented code above.
-        *(ptr+3) = (a!=255 && b!=255 && c!=255);
+        *(ptr+3) = (a!=0 && b!=0 && c!=0);
         //-----------------------------------------------
         ptr += 4;
         data += 3;
@@ -496,7 +500,7 @@ void init_opengl(void)
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
     glTexImage2D(GL_TEXTURE_2D, 0, 3, img.width, img.height, 0,
             GL_RGB, GL_UNSIGNED_BYTE, img.data);
-    
+
     /*
     //background - planet
     glGenTextures(1, &g.plid);
@@ -529,9 +533,25 @@ void init_opengl(void)
             data2[offset2+1] = sprite.data[offset+1];
             data2[offset2+2] = sprite.data[offset+2];
             data2[offset2+3] =
-            ((unsigned char)sprite.data[offset+0] != 255 &&
-             (unsigned char)sprite.data[offset+1] != 255 &&
-             (unsigned char)sprite.data[offset+2] != 255);
+            ((unsigned char)sprite.data[offset+0] != 0 &&
+             (unsigned char)sprite.data[offset+1] != 0 &&
+             (unsigned char)sprite.data[offset+2] != 0);
+        }
+    }
+
+    //blackhole
+    unsigned char *data3 = new unsigned char [blackhole.width * blackhole.height * 4];
+    for (int i=0; i<blackhole.height; i++) {
+        for (int j=0; j<blackhole.width; j++) {
+            int offset  = i*blackhole.width*3 + j*3;
+            int offset2 = i*blackhole.width*4 + j*4;
+            data3[offset2+0] = blackhole.data[offset+0];
+            data3[offset2+1] = blackhole.data[offset+1];
+            data3[offset2+2] = blackhole.data[offset+2];
+            data3[offset2+3] =
+            ((unsigned char)blackhole.data[offset+0] != 0 &&
+             (unsigned char)blackhole.data[offset+1] != 0 &&
+             (unsigned char)blackhole.data[offset+2] != 0);
         }
     }
 
@@ -544,6 +564,16 @@ void init_opengl(void)
                                 0, GL_RGBA, GL_UNSIGNED_BYTE, data2);
     delete [] data2;
     g.ship[0].set_dimensions(g.xres, g.yres);
+
+    //#endif
+    glGenTextures(1, &g.bhid);
+    glBindTexture(GL_TEXTURE_2D, g.bhid);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, blackhole.width, blackhole.height,
+                                0, GL_RGBA, GL_UNSIGNED_BYTE, data3);
+    delete [] data3;
+    g.blhole[0].set_dimensions(g.xres, g.yres);
 }
 
 void physics()
@@ -625,7 +655,7 @@ void render()
         r.left = g.xres / 2;
         r.center = 1;
         ggprint40(&r, 20, 0x00ffffff, "Welcome To Galactic Ship");
-        ggprint12(&r, 0, 0x00008000, "Press 's' to start");
+        ggprint12(&r, 0, 0x00008000, "Press 's' to Start");
         return;
     }
     if (g.state == STATE_GAME_OVER) {
@@ -633,8 +663,8 @@ void render()
         r.left = g.xres / 2;
         r.center = 1;
         ggprint16(&r, 20, 0x00ff0000, "GAME OVER");
-        ggprint13(&r, 50, 0x00ffff00, "Your score: %i", g.score);
-        ggprint12(&r, 0, 0x000000ff, "Right-click to play again");
+        ggprint13(&r, 50, 0x00ffff00, "Your Score: %i", g.score);
+        ggprint12(&r, 0, 0x00bfff, "Right-Click to Play Again");
         return;
     }
     /*r.bot = g.yres - 20;
@@ -666,11 +696,14 @@ void render()
         ggprint10(&r, 30, 0x00ffffff, "Player's score: %i", g.score);
         ggprint13(&l, 0, 0x00FF0000, "Lives: %i ", g.lives);
         ggprint12(&r, 0, 0x00ACBFFF, "Countdown: %i", g.playtime - g.countdown);
-
+        
+        ////// Ship ////////
         glPushMatrix();
         glColor3ub(255, 255, 255);
-        glTranslatef(g.ship[0].pos[0], g.ship[0].pos[1], 0.0f);
-        
+        //glTranslatef(g.xres/2+20.0f, 60.0f, 0.0f);
+        static float forward = 0.5f;
+        glTranslatef(g.ship[0].pos[0]+forward, g.ship[0].pos[1], 0.0f);
+        forward++; 
         //set alpha test
         //https://www.khronos.org/registry/OpenGL-Refpages/gl2.1
         ///xhtml/glAlphaFunc.xml
@@ -704,8 +737,8 @@ void render()
             glTexCoord2f(tx2, ty1); glVertex2f( g.ship[0].w,  g.ship[0].h);
             glTexCoord2f(tx2, ty2); glVertex2f( g.ship[0].w, -g.ship[0].h);
         glEnd();*/
-        float w = 20;
-        float h = 50;
+        float w = 40;
+        float h = 80;
         glBegin(GL_QUADS);
             glTexCoord2f(tx1, ty2); glVertex2f(-w, -h);
             glTexCoord2f(tx1, ty1); glVertex2f(-w,  h);
@@ -716,6 +749,46 @@ void render()
         glBindTexture(GL_TEXTURE_2D, 0);
         glDisable(GL_ALPHA_TEST);
         glPopMatrix();
+
+
+        ///////// Blackhole ////////
+        glPushMatrix();
+        glColor3ub(255, 255, 255);
+        //static float move = 1.0f;
+        //glTranslatef(g.blhole[0].pos[0], g.blhole[0].pos[1], 0.0f);
+        
+        glTranslatef(g.xres/2, 120.0f, 0.0f);        
+        //set alpha test
+        //https://www.khronos.org/registry/OpenGL-Refpages/gl2.1
+        ///xhtml/glAlphaFunc.xml
+        glEnable(GL_ALPHA_TEST);
+        //transparent if alpha value is greater than 0.0
+        glAlphaFunc(GL_GREATER, 0.0f);
+        //Set 4-channels of color intensity
+        glColor4ub(255,255,255,255);
+
+        //glBegin(GL_TRIANGLE_FAN)
+        glBindTexture(GL_TEXTURE_2D, g.bhid);
+        //make texture coordinates based on frame number.
+        float bx1 = 0.0f + (float)((g.frameno-1) % 4) * 0.25f;
+        float bx2 = bx1 + 0.25f;
+        //printf("%f %f\n", tx1, tx2);
+        float by1 = 0.0f + (float)((g.frameno-1) / 4) * 0.25f;
+        float by2 = by1 + 0.25;
+        
+        float bw = 28;
+        float bh = 32;
+        glBegin(GL_QUADS);
+            glTexCoord2f(bx1, by2); glVertex2f(-bw, -bh);
+            glTexCoord2f(bx1, by1); glVertex2f(-bw,  bh);
+            glTexCoord2f(bx2, by1); glVertex2f( bw,  bh);
+            glTexCoord2f(bx2, by2); glVertex2f( bw, -bh);
+        glEnd();
+        //turn off alpha test
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glDisable(GL_ALPHA_TEST);
+        glPopMatrix();
+
     }
 }
 
