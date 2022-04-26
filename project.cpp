@@ -110,7 +110,7 @@ public:
 enum {
     STATE_TOP,
     STATE_INTRO,
-    STATE_INTRUCTIONS,
+    STATE_INSTRUCTIONS,
     STATE_SHOW_OBJECTIVES,
     STATE_PLAY,
     STATE_GAME_OVER,
@@ -130,6 +130,7 @@ public:
     int inside;
     
     int state;
+    int state2;
     int score;
     int lives;
     int starttime;
@@ -239,8 +240,8 @@ int main()
 
 Global::Global()
 {
-	xres = 500;
-	yres = 300;
+	xres = 800;
+	yres = 400;
     //box
     w = 20.0f;
     pos[0] = 0.0f + w;
@@ -252,6 +253,7 @@ Global::Global()
     score = 0;
     lives = 0;
     state = STATE_INTRO;
+    //state2 = STATE_INTRUCTIONS;
     timer = time(NULL);
     timeCount = 0;
     //countTimer= 0;
@@ -370,6 +372,9 @@ void X11_wrapper::check_mouse(XEvent *e)
             if (g.state == STATE_INTRO) {
 
             }
+            if (g.state == STATE_INSTRUCTIONS) {
+
+            }
             if (g.state == STATE_PLAY) {
                 if (x >= g.pos[0]-g.w && x <= g.pos[0]+g.w) {
                    if (y >= g.pos[1]-g.w && y <= g.pos[1]+g.w) {
@@ -426,9 +431,15 @@ int X11_wrapper::check_keys(XEvent *e)
                 if (g.state == STATE_INTRO) {
                     g.state = STATE_PLAY;
                     g.starttime = time(NULL);
-                    g.playtime = 25;
+                    g.playtime = 10;
                 }
 				break;
+            case XK_a:
+                //Instructions
+                if (g.state == STATE_INTRO) {
+                    g.state == STATE_INSTRUCTIONS;
+                }
+                break;
             case XK_2:
                 //Key 2 was pressed
                 //move down
@@ -655,7 +666,18 @@ void render()
         r.left = g.xres / 2;
         r.center = 1;
         ggprint40(&r, 20, 0x00ffffff, "Welcome To Galactic Ship");
-        ggprint12(&r, 0, 0x00008000, "Press 's' to Start");
+        ggprint12(&r, 30, 0x00008000, "Press 's' to Start");
+        ggprint12(&r, 40, 0x00fff8bb30, "Press 'i' to See Instructions");
+        return;
+    }
+    //Intructions
+    if (g.state == STATE_INSTRUCTIONS) {
+        r.bot = g.yres / 2;
+        r.left = g.xres / 2;
+        r.center = 1;
+        ggprint16(&r, 20, 0x00ff0000, "OBJECTIVE:");
+        ggprint16(&r, 40, 0x00ff0000, "The goal of the game is to avoid the orbs and collect the most amount of ...");
+        ggprint16(&r, 20, 0x00EA1200, "HOW TO PLAY");
         return;
     }
     if (g.state == STATE_GAME_OVER) {
@@ -776,8 +798,8 @@ void render()
         float by1 = 0.0f + (float)((g.frameno-1) / 4) * 0.25f;
         float by2 = by1 + 0.25;
         
-        float bw = 28;
-        float bh = 32;
+        float bw = 20;
+        float bh = 25;
         glBegin(GL_QUADS);
             glTexCoord2f(bx1, by2); glVertex2f(-bw, -bh);
             glTexCoord2f(bx1, by1); glVertex2f(-bw,  bh);
