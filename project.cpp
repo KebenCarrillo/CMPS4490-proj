@@ -64,12 +64,15 @@ public:
     }
 //Outerspace Background:
 //https://opengameart.org/content/space-backgrounds-0
-} //img("/home/stu/lmoreno/4490/proj/CMPS4490-proj/space.png"), 
-  //sprite("/home/stu/lmoreno/4490/proj/CMPS4490-proj/greyspaceship.png")
-  img("/home/stu/kcarrillo/4490/proj/CMPS4490-proj/space.png"),
-  sprite("/home/stu/kcarrillo/4490/proj/CMPS4490-proj/spaceship.png"),
-  blackhole("/home/stu/kcarrillo/4490/proj/CMPS4490-proj/blackhole.png");
-  //planet("/home/stu/kcarrillo/4490/proj/planet.png");
+} img("/home/stu/lmoreno/4490/proj/CMPS4490-proj/space.png"), 
+  sprite("/home/stu/lmoreno/4490/proj/CMPS4490-proj/greyspaceship.png"),
+  blackhole("/home/stu/lmoreno/4490/proj/CMPS4490-proj/blackhole.png"),
+  goldrock("/home/stu/lmoreno/4490/proj/CMPS4490-proj/goldrock.png");
+  //img("/home/stu/kcarrillo/4490/proj/CMPS4490-proj/space.png"),
+  //sprite("/home/stu/kcarrillo/4490/proj/CMPS4490-proj/spaceship.png"),
+  //blackhole("/home/stu/kcarrillo/4490/proj/CMPS4490-proj/blackhole.png"),
+  //goldrock("/home/stu/kcarrillo/4490/proj/CMPS4490-proj/goldrock.png");
+  //planet("/home/stu/kcarrillo/4490/proj/CMPS4490-proj/planet.png");
 
 typedef float Flt;
 typedef Flt Vec[2];
@@ -83,14 +86,20 @@ struct Point {
     Flt vel[2];
     Point() { }
 };
+////////////////////////////
+typedef double Flt2;
+struct Box {
+    Flt2 h, w, pos[3];
+};
+////////////////////////////
 
-//typedef double Flt;
 //game object
 class Ship {
 public:
     Flt pos[3]; //vector
     Flt vel[3]; //vector
     float w, h;
+    Box box[5];
     unsigned int color;
     bool alive_or_dead_;
     Flt mass;
@@ -101,11 +110,18 @@ public:
         vel[0] = 4.0;
         vel[1] = 0.0;
     }
+    Ship(int x, int y) {
+        w = h = 4.0;
+        pos[0] = x;
+        pos[1] = y;
+        vel[0] = 0.0;
+        vel[1] = 0.0;
+    }
     void set_dimensions(int x, int y) {
         w = (float)x * 0.05;
         h = w; 
     }
-};
+} control(300,200);
 
 enum {
     STATE_TOP,
@@ -119,16 +135,24 @@ enum {
 
 class Global {
 public:
-	int xres, yres;
-    Ship ship[2];
-    Ship blhole[2];
+	char keys[65536];
+    
+    int xres, yres;
+    Ship ship[3];
+    Ship blhole[3];
+    Ship rock[3];
     // the box components
     float pos[2];
     Point p[4];
-    float w;
+    float w, h;
     float dir;
     int inside;
-    
+    ////////////////////// 
+    int up; 
+    int down;
+    int left;
+    int right;
+    //////////////////////
     int state;
     int state2;
     int score;
@@ -143,6 +167,7 @@ public:
     unsigned int spriteid;
     unsigned int plid;
     unsigned int bhid;
+    unsigned int rockid;
     Flt gravity;
     int frameno;
 
@@ -240,7 +265,8 @@ int main()
 
 Global::Global()
 {
-	xres = 800;
+	memset(keys, 0, 65536);
+    xres = 800;
 	yres = 400;
     //box
     w = 20.0f;
@@ -257,6 +283,11 @@ Global::Global()
     timer = time(NULL);
     timeCount = 0;
     //countTimer= 0;
+    //
+    up = 0;
+    down = 0;
+    left = 0;
+    right = 0;
 }
 
 X11_wrapper::~X11_wrapper()
@@ -424,6 +455,8 @@ int X11_wrapper::check_keys(XEvent *e)
 	if (e->type != KeyPress && e->type != KeyRelease)
 		return 0;
 	int key = XLookupKeysym(&e->xkey, 0);
+    if (e->type == KeyPress)   g.keys[key] = 1;
+    if (e->type == KeyRelease) g.keys[key] = 0;
 	if (e->type == KeyPress) {
 		switch (key) {
 			case XK_s:
@@ -431,15 +464,24 @@ int X11_wrapper::check_keys(XEvent *e)
                 if (g.state == STATE_INTRO) {
                     g.state = STATE_PLAY;
                     g.starttime = time(NULL);
-                    g.playtime = 10;
+                    g.playtime = 40;
                 }
 				break;
-            case XK_a:
+            case XK_i:
                 //Instructions
                 if (g.state == STATE_INTRO) {
                     g.state == STATE_INSTRUCTIONS;
+                    g.state == STATE_PLAY;
                 }
                 break;
+            ////////////////////////////
+            /*case XK_Up:
+                //move ship up
+                g.up = 1;
+                g.ship[0].vel[1] += 10;
+                //g.control.vel[1] += 10;
+                break;*/
+            ////////////////////////////
             case XK_2:
                 //Key 2 was pressed
                 //move down
@@ -565,7 +607,23 @@ void init_opengl(void)
              (unsigned char)blackhole.data[offset+2] != 0);
         }
     }
+    
 
+    //rock
+    unsigned char *data4 = new unsigned char [goldrock.width * goldrock.height * 4];
+    for (int i=0; i<goldrock.height; i++) {
+        for (int j=0; j<goldrock.width; j++) {
+            int offset  = i*goldrock.width*3 + j*3;
+            int offset2 = i*goldrock.width*4 + j*4;
+            data3[offset2+0] = goldrock.data[offset+0];
+            data3[offset2+1] = goldrock.data[offset+1];
+            data3[offset2+2] = goldrock.data[offset+2];
+            data3[offset2+3] =
+            ((unsigned char)goldrock.data[offset+0] != 0 &&
+             (unsigned char)goldrock.data[offset+1] != 0 &&
+             (unsigned char)goldrock.data[offset+2] != 0);
+        }
+    }
     //#endif
     glGenTextures(1, &g.spriteid);
     glBindTexture(GL_TEXTURE_2D, g.spriteid);
@@ -585,10 +643,65 @@ void init_opengl(void)
                                 0, GL_RGBA, GL_UNSIGNED_BYTE, data3);
     delete [] data3;
     g.blhole[0].set_dimensions(g.xres, g.yres);
+
+    glGenTextures(1, &g.rockid);
+    glBindTexture(GL_TEXTURE_2D, g.rockid);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, goldrock.width, goldrock.height,
+                                0, GL_RGBA, GL_UNSIGNED_BYTE, data4);
+    delete [] data4;
+    g.rock[0].set_dimensions(g.xres, g.yres);
 }
 
 void physics()
 {
+    //accelerate with spacebar
+    if (g.keys[XK_space] == 1)
+        control.vel[0] += 1.0;
+    control.vel[0] -= 0.1;
+    //control.pos[1] += control.vel[1];
+    //if (control.pos[1] < 0) {
+    //    control.pos[1] = 0;
+    //    control.vel[1] = 0.0;
+    //}
+    // move ship up
+    if (g.keys[XK_Up] == 1) 
+        control.vel[1] += 1.0;
+    control.vel[1] -= 0.1;
+    control.pos[1] += control.vel[1];
+    if (control.pos[1] < 0) {
+        control.pos[1] = 0;
+        control.vel[1] = 0.0;
+    }
+    // move ship down
+    if (g.keys[XK_Down] == 1)
+        control.vel[1] -= 1.0;
+    control.vel[1] -= 0.1;
+    control.pos[1] += control.vel[1];
+    if (control.pos[1] < 0) {
+        control.pos[1] = 0;
+        control.vel[1] = 0.0;
+    }
+    // move ship left
+    if (g.keys[XK_Left] == 1)
+        control.vel[0] -= 1.0;
+    control.vel[0] -= 0.1;
+    control.pos[0] += control.vel[0];
+    if (control.pos[0] < 0) {
+        control.pos[0] = 0;
+        control.vel[0] = 0.0;
+    }
+    // move ship right
+    if (g.keys[XK_Right] == 1)
+        control.vel[0] += 1.0;
+    control.vel[0] -= 0.1;
+    control.pos[0] += control.vel[0];
+    if (control.pos[0] < 0) {
+        control.pos[0] = 0;
+        control.vel[0] = 0.0;
+    }
+    
     /*time_t curr_seconds = time(NULL);
     if (curr_seconds != g.timer) {
         //define a line segment
@@ -676,7 +789,8 @@ void render()
         r.left = g.xres / 2;
         r.center = 1;
         ggprint16(&r, 20, 0x00ff0000, "OBJECTIVE:");
-        ggprint16(&r, 40, 0x00ff0000, "The goal of the game is to avoid the orbs and collect the most amount of ...");
+        ggprint16(&r, 40, 0x00ff0000, "The goal of the game is to avoid the orbs" 
+                "and collect the most amount of ...");
         ggprint16(&r, 20, 0x00EA1200, "HOW TO PLAY");
         return;
     }
@@ -706,6 +820,21 @@ void render()
     ggprint8b(&l, 0, 0x00FF0000, "Lives: %i ", g.lives);
     ggprint8b(&t, 0, 0x00ACBFFF, "Timer: %i ", g.timer);
     */
+
+    ///////////////////
+    //velocity doesnt work
+    /*static float move = -100.0f;
+    static float up = 0.0f;
+    static float vel = 2.0f;
+    glTranslatef(g.xres/2 + move, 60.0f + up, 0.0f);
+    //
+    if (g.up) {
+        up += vel;
+        if(up > 100)
+            vel = -vel;
+    }*/
+
+
 	//Draw ship.
 	if (g.state == STATE_PLAY) {
         r.bot = g.yres - 20;
@@ -713,7 +842,7 @@ void render()
         r.center = 0;
         Rect l;
         l.bot = g.yres - 20;
-        l.left = 440;
+        l.left = 720;
         l.center = 0;
         ggprint10(&r, 30, 0x00ffffff, "Player's score: %i", g.score);
         ggprint13(&l, 0, 0x00FF0000, "Lives: %i ", g.lives);
@@ -723,9 +852,20 @@ void render()
         glPushMatrix();
         glColor3ub(255, 255, 255);
         //glTranslatef(g.xres/2+20.0f, 60.0f, 0.0f);
-        static float forward = 0.5f;
-        glTranslatef(g.ship[0].pos[0]+forward, g.ship[0].pos[1], 0.0f);
-        forward++; 
+        //static float forward = 0.5f;
+        //velocity doesnt work
+        //static float move = -100.0f;
+        //static float up = 0.0f;
+        //static float vel = 2.0f;
+        glTranslatef(control.pos[0], control.pos[1], 0.0f);
+        //
+        //if (g.up) {
+        //    up += vel;
+        //    if(up > 100)
+        //        vel = -vel;
+        //}
+        //glTranslatef(g.ship[0].pos[0]+forward, g.ship[0].pos[1], 0.0f);
+        //forward++; 
         //set alpha test
         //https://www.khronos.org/registry/OpenGL-Refpages/gl2.1
         ///xhtml/glAlphaFunc.xml
@@ -800,22 +940,55 @@ void render()
         
         float bw = 20;
         float bh = 25;
-        glBegin(GL_QUADS);
-            glTexCoord2f(bx1, by2); glVertex2f(-bw, -bh);
-            glTexCoord2f(bx1, by1); glVertex2f(-bw,  bh);
-            glTexCoord2f(bx2, by1); glVertex2f( bw,  bh);
-            glTexCoord2f(bx2, by2); glVertex2f( bw, -bh);
-        glEnd();
+            glBegin(GL_QUADS);
+                glTexCoord2f(bx1, by2); glVertex2f(-bw, -bh);
+                glTexCoord2f(bx1, by1); glVertex2f(-bw,  bh);
+                glTexCoord2f(bx2, by1); glVertex2f( bw,  bh);
+                glTexCoord2f(bx2, by2); glVertex2f( bw, -bh);
+            glEnd();
         //turn off alpha test
         glBindTexture(GL_TEXTURE_2D, 0);
         glDisable(GL_ALPHA_TEST);
         glPopMatrix();
 
+        //////// Gold Rock /////////////
+        glPushMatrix();
+        glColor3ub(255, 255, 255);
+        //static float move = 1.0f;
+        //glTranslatef(g.blhole[0].pos[0], g.blhole[0].pos[1], 0.0f);
+
+        //glTranslatef(g.xres , 120.0f, 0.0f);
+        //set alpha test
+        //https://www.khronos.org/registry/OpenGL-Refpages/gl2.1
+        ///xhtml/glAlphaFunc.xml
+        //glEnable(GL_ALPHA_TEST);
+        //transparent if alpha value is greater than 0.0
+        //glAlphaFunc(GL_GREATER, 0.0f);
+        //Set 4-channels of color intensity
+        glColor4ub(255,255,255,255);
+
+        //glBegin(GL_TRIANGLE_FAN)
+        glBindTexture(GL_TEXTURE_2D, g.rockid);
+        //make texture coordinates based on frame number.
+        //float rx1 = 0.0f + (float)((g.frameno-1) % 1) * 1.0f;
+        //float rx2 = rx1 + 1.0f;
+        //printf("%f %f\n", tx1, tx2);
+        //float ry1 = 0.0f + (float)((g.frameno-1) / 1) * 1.0f;
+        //float ry2 = ry1 + 1.0;
+
+        float rw = 10;
+        float rh = 15;
+            glBegin(GL_QUADS);
+                glTexCoord2f(20, 0.5); glVertex2i(-rw, -rh);
+                glTexCoord2f(20, 10); glVertex2i(-rw,  rh);
+                glTexCoord2f(10, 15); glVertex2i( rw,  rh);
+                glTexCoord2f(10, 15); glVertex2i( rw, -rh);
+            glEnd();
+        //turn off alpha test
+        glBindTexture(GL_TEXTURE_2D, 0);
+        //glDisable(GL_ALPHA_TEST);
+        glPopMatrix();
+
     }
 }
-
-
-
-
-
 
