@@ -64,14 +64,14 @@ public:
     }
 //Outerspace Background:
 //https://opengameart.org/content/space-backgrounds-0
-} img("/home/stu/lmoreno/4490/proj/CMPS4490-proj/space.png"), 
-  sprite("/home/stu/lmoreno/4490/proj/CMPS4490-proj/greyspaceship.png"),
-  blackhole("/home/stu/lmoreno/4490/proj/CMPS4490-proj/blackhole.png"),
-  goldrock("/home/stu/lmoreno/4490/proj/CMPS4490-proj/goldrock.png");
-  //img("/home/stu/kcarrillo/4490/proj/CMPS4490-proj/space.png"),
-  //sprite("/home/stu/kcarrillo/4490/proj/CMPS4490-proj/spaceship.png"),
-  //blackhole("/home/stu/kcarrillo/4490/proj/CMPS4490-proj/blackhole.png"),
-  //goldrock("/home/stu/kcarrillo/4490/proj/CMPS4490-proj/goldrock.png");
+} //img("/home/stu/lmoreno/4490/proj/CMPS4490-proj/space.png"), 
+  //sprite("/home/stu/lmoreno/4490/proj/CMPS4490-proj/spaceship.png"),
+  //blackhole("/home/stu/lmoreno/4490/proj/CMPS4490-proj/blackhole.png"),
+  //goldrock("/home/stu/lmoreno/4490/proj/CMPS4490-proj/goldrock.png");
+  img("/home/stu/kcarrillo/4490/proj/CMPS4490-proj/space.png"),
+  sprite("/home/stu/kcarrillo/4490/proj/CMPS4490-proj/spaceship.png"),
+  blackhole("/home/stu/kcarrillo/4490/proj/CMPS4490-proj/blackhole.png"),
+  goldrock("/home/stu/kcarrillo/4490/proj/CMPS4490-proj/goldrock.png");
   //planet("/home/stu/kcarrillo/4490/proj/CMPS4490-proj/planet.png");
 
 typedef float Flt;
@@ -121,7 +121,7 @@ public:
         w = (float)x * 0.05;
         h = w; 
     }
-} control(300,200);
+} control(100,200);
 
 enum {
     STATE_TOP,
@@ -610,6 +610,7 @@ void init_opengl(void)
     
 
     //rock
+    /*
     unsigned char *data4 = new unsigned char [goldrock.width * goldrock.height * 4];
     for (int i=0; i<goldrock.height; i++) {
         for (int j=0; j<goldrock.width; j++) {
@@ -623,7 +624,7 @@ void init_opengl(void)
              (unsigned char)goldrock.data[offset+1] != 0 &&
              (unsigned char)goldrock.data[offset+2] != 0);
         }
-    }
+    }*/
     //#endif
     glGenTextures(1, &g.spriteid);
     glBindTexture(GL_TEXTURE_2D, g.spriteid);
@@ -643,7 +644,7 @@ void init_opengl(void)
                                 0, GL_RGBA, GL_UNSIGNED_BYTE, data3);
     delete [] data3;
     g.blhole[0].set_dimensions(g.xres, g.yres);
-
+/*
     glGenTextures(1, &g.rockid);
     glBindTexture(GL_TEXTURE_2D, g.rockid);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
@@ -652,6 +653,7 @@ void init_opengl(void)
                                 0, GL_RGBA, GL_UNSIGNED_BYTE, data4);
     delete [] data4;
     g.rock[0].set_dimensions(g.xres, g.yres);
+    */
 }
 
 void physics()
@@ -857,7 +859,12 @@ void render()
         //static float move = -100.0f;
         //static float up = 0.0f;
         //static float vel = 2.0f;
+        
+        //glTranslatef(control.pos[0], control.pos[1], 0.0f);
+        //control.pos[0] = 200;
+        //control.pos[1] = 200;
         glTranslatef(control.pos[0], control.pos[1], 0.0f);
+        
         //
         //if (g.up) {
         //    up += vel;
@@ -881,8 +888,8 @@ void render()
         float tx1 = 0.0f + (float)((g.frameno-1) % 3) * 0.33f;
         float tx2 = tx1 + 0.33f;
         //printf("%f %f\n", tx1, tx2);
-        float ty1 = 0.0f + (float)((g.frameno-1) / 8) * 0.125f;
-        float ty2 = ty1 + 0.125;
+        float ty1 = 0.0f + (float)((g.frameno-1) / 1) * 1.0;
+        float ty2 = ty1 + 1.0;
         /*
         if (g.ship[0].vel[0] > 0.0) {
             float tmp = tx1;
@@ -938,8 +945,8 @@ void render()
         float by1 = 0.0f + (float)((g.frameno-1) / 4) * 0.25f;
         float by2 = by1 + 0.25;
         
-        float bw = 20;
-        float bh = 25;
+        float bw = 30;
+        float bh = 35;
             glBegin(GL_QUADS);
                 glTexCoord2f(bx1, by2); glVertex2f(-bw, -bh);
                 glTexCoord2f(bx1, by1); glVertex2f(-bw,  bh);
@@ -952,8 +959,8 @@ void render()
         glPopMatrix();
 
         //////// Gold Rock /////////////
-        glPushMatrix();
-        glColor3ub(255, 255, 255);
+  //      glPushMatrix();
+  //      glColor3ub(255, 255, 255);
         //static float move = 1.0f;
         //glTranslatef(g.blhole[0].pos[0], g.blhole[0].pos[1], 0.0f);
 
@@ -965,10 +972,10 @@ void render()
         //transparent if alpha value is greater than 0.0
         //glAlphaFunc(GL_GREATER, 0.0f);
         //Set 4-channels of color intensity
-        glColor4ub(255,255,255,255);
+  //      glColor4ub(255,255,255,255);
 
         //glBegin(GL_TRIANGLE_FAN)
-        glBindTexture(GL_TEXTURE_2D, g.rockid);
+  //      glBindTexture(GL_TEXTURE_2D, g.rockid);
         //make texture coordinates based on frame number.
         //float rx1 = 0.0f + (float)((g.frameno-1) % 1) * 1.0f;
         //float rx2 = rx1 + 1.0f;
@@ -976,18 +983,18 @@ void render()
         //float ry1 = 0.0f + (float)((g.frameno-1) / 1) * 1.0f;
         //float ry2 = ry1 + 1.0;
 
-        float rw = 10;
-        float rh = 15;
-            glBegin(GL_QUADS);
-                glTexCoord2f(20, 0.5); glVertex2i(-rw, -rh);
-                glTexCoord2f(20, 10); glVertex2i(-rw,  rh);
-                glTexCoord2f(10, 15); glVertex2i( rw,  rh);
-                glTexCoord2f(10, 15); glVertex2i( rw, -rh);
-            glEnd();
+  //      float rw = 10;
+  //      float rh = 15;
+  //          glBegin(GL_QUADS);
+  //              glTexCoord2f(20, 0.5); glVertex2i(-rw, -rh);
+  //              glTexCoord2f(20, 10); glVertex2i(-rw,  rh);
+  //              glTexCoord2f(10, 15); glVertex2i( rw,  rh);
+  //              glTexCoord2f(10, 15); glVertex2i( rw, -rh);
+  //          glEnd();
         //turn off alpha test
-        glBindTexture(GL_TEXTURE_2D, 0);
+  //      glBindTexture(GL_TEXTURE_2D, 0);
         //glDisable(GL_ALPHA_TEST);
-        glPopMatrix();
+  //      glPopMatrix();
 
     }
 }
