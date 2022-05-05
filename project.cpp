@@ -62,16 +62,18 @@ public:
         if (!isPPM)
             unlink(newfile);
     }
+//gem sprite
+//www.deviantart.com/bigbark24/art/Diamond-sprite-sheet-759155287
 //Outerspace Background:
 //https://opengameart.org/content/space-backgrounds-0
-} //img("/home/stu/lmoreno/4490/proj/CMPS4490-proj/space.png"), 
-  //sprite("/home/stu/lmoreno/4490/proj/CMPS4490-proj/spaceship.png"),
-  //blackhole("/home/stu/lmoreno/4490/proj/CMPS4490-proj/blackhole.png"),
-  //goldrock("/home/stu/lmoreno/4490/proj/CMPS4490-proj/goldrock.png");
-  img("/home/stu/kcarrillo/4490/proj/CMPS4490-proj/space.png"),
-  sprite("/home/stu/kcarrillo/4490/proj/CMPS4490-proj/spaceship.png"),
-  blackhole("/home/stu/kcarrillo/4490/proj/CMPS4490-proj/blackhole.png"),
-  goldrock("/home/stu/kcarrillo/4490/proj/CMPS4490-proj/goldrock.png");
+} img("/home/stu/lmoreno/4490/proj/CMPS4490-proj/space.png"), 
+  sprite("/home/stu/lmoreno/4490/proj/CMPS4490-proj/spaceship.png"),
+  blackhole("/home/stu/lmoreno/4490/proj/CMPS4490-proj/blackhole.png"),
+  gem("/home/stu/lmoreno/4490/proj/CMPS4490-proj/gem.png");
+  //img("/home/stu/kcarrillo/4490/proj/CMPS4490-proj/space.png"),
+  //sprite("/home/stu/kcarrillo/4490/proj/CMPS4490-proj/spaceship.png"),
+  //blackhole("/home/stu/kcarrillo/4490/proj/CMPS4490-proj/blackhole.png"),
+  //goldrock("/home/stu/kcarrillo/4490/proj/CMPS4490-proj/goldrock.png");
   //planet("/home/stu/kcarrillo/4490/proj/CMPS4490-proj/planet.png");
 
 typedef float Flt;
@@ -140,7 +142,7 @@ public:
     int xres, yres;
     Ship ship[3];
     Ship blhole[3];
-    Ship rock[3];
+    Ship gem[3];
     // the box components
     float pos[2];
     Point p[4];
@@ -167,7 +169,7 @@ public:
     unsigned int spriteid;
     unsigned int plid;
     unsigned int bhid;
-    unsigned int rockid;
+    unsigned int gemid;
     Flt gravity;
     int frameno;
 
@@ -403,9 +405,9 @@ void X11_wrapper::check_mouse(XEvent *e)
             if (g.state == STATE_INTRO) {
 
             }
-            if (g.state == STATE_INSTRUCTIONS) {
+            //if (g.state == STATE_INSTRUCTIONS) {
 
-            }
+            //}
             if (g.state == STATE_PLAY) {
                 if (x >= g.pos[0]-g.w && x <= g.pos[0]+g.w) {
                    if (y >= g.pos[1]-g.w && y <= g.pos[1]+g.w) {
@@ -461,7 +463,7 @@ int X11_wrapper::check_keys(XEvent *e)
 		switch (key) {
 			case XK_s:
 				//Key s was pressed
-                if (g.state == STATE_INTRO) {
+                if (g.state == STATE_INTRO || g.state == STATE_INSTRUCTIONS) {
                     g.state = STATE_PLAY;
                     g.starttime = time(NULL);
                     g.playtime = 40;
@@ -470,18 +472,9 @@ int X11_wrapper::check_keys(XEvent *e)
             case XK_i:
                 //Instructions
                 if (g.state == STATE_INTRO) {
-                    g.state == STATE_INSTRUCTIONS;
-                    g.state == STATE_PLAY;
+                    g.state = STATE_INSTRUCTIONS;
                 }
                 break;
-            ////////////////////////////
-            /*case XK_Up:
-                //move ship up
-                g.up = 1;
-                g.ship[0].vel[1] += 10;
-                //g.control.vel[1] += 10;
-                break;*/
-            ////////////////////////////
             case XK_2:
                 //Key 2 was pressed
                 //move down
@@ -609,22 +602,21 @@ void init_opengl(void)
     }
     
 
-    //rock
-    /*
-    unsigned char *data4 = new unsigned char [goldrock.width * goldrock.height * 4];
-    for (int i=0; i<goldrock.height; i++) {
-        for (int j=0; j<goldrock.width; j++) {
-            int offset  = i*goldrock.width*3 + j*3;
-            int offset2 = i*goldrock.width*4 + j*4;
-            data3[offset2+0] = goldrock.data[offset+0];
-            data3[offset2+1] = goldrock.data[offset+1];
-            data3[offset2+2] = goldrock.data[offset+2];
-            data3[offset2+3] =
-            ((unsigned char)goldrock.data[offset+0] != 0 &&
-             (unsigned char)goldrock.data[offset+1] != 0 &&
-             (unsigned char)goldrock.data[offset+2] != 0);
+    //gem
+    unsigned char *data4 = new unsigned char [gem.width * gem.height * 4];
+    for (int i=0; i<gem.height; i++) {
+        for (int j=0; j<gem.width; j++) {
+            int offset  = i*gem.width*3 + j*3;
+            int offset2 = i*gem.width*4 + j*4;
+            data4[offset2+0] = gem.data[offset+0];
+            data4[offset2+1] = gem.data[offset+1];
+            data4[offset2+2] = gem.data[offset+2];
+            data4[offset2+3] =
+            ((unsigned char)gem.data[offset+0] != 0 &&
+             (unsigned char)gem.data[offset+1] != 0 &&
+             (unsigned char)gem.data[offset+2] != 0);
         }
-    }*/
+    }
     //#endif
     glGenTextures(1, &g.spriteid);
     glBindTexture(GL_TEXTURE_2D, g.spriteid);
@@ -644,16 +636,16 @@ void init_opengl(void)
                                 0, GL_RGBA, GL_UNSIGNED_BYTE, data3);
     delete [] data3;
     g.blhole[0].set_dimensions(g.xres, g.yres);
-/*
-    glGenTextures(1, &g.rockid);
-    glBindTexture(GL_TEXTURE_2D, g.rockid);
+
+    glGenTextures(1, &g.gemid);
+    glBindTexture(GL_TEXTURE_2D, g.gemid);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, goldrock.width, goldrock.height,
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, gem.width, gem.height,
                                 0, GL_RGBA, GL_UNSIGNED_BYTE, data4);
     delete [] data4;
-    g.rock[0].set_dimensions(g.xres, g.yres);
-    */
+    g.gem[0].set_dimensions(g.xres, g.yres);
+    
 }
 
 void physics()
@@ -703,6 +695,8 @@ void physics()
         control.pos[0] = 0;
         control.vel[0] = 0.0;
     }
+   
+    
     
     /*time_t curr_seconds = time(NULL);
     if (curr_seconds != g.timer) {
@@ -790,10 +784,12 @@ void render()
         r.bot = g.yres / 2;
         r.left = g.xres / 2;
         r.center = 1;
-        ggprint16(&r, 20, 0x00ff0000, "OBJECTIVE:");
-        ggprint16(&r, 40, 0x00ff0000, "The goal of the game is to avoid the orbs" 
-                "and collect the most amount of ...");
-        ggprint16(&r, 20, 0x00EA1200, "HOW TO PLAY");
+        ggprint40(&r, 30, 0x00ffffff, "Instructions");
+        ggprint16(&r, 20, 0x00bf3421, "The goal of the game is to avoid the portals"); 
+        ggprint16(&r, 21, 0x00bf3421, "and collect the most amount of rubies");
+        ggprint16(&r, 40, 0x00fcc947, "Arrow keys to control ship movement");
+        ggprint16(&r, 40, 0x00fcc947, "Space bar to accelerate ship");
+        ggprint13(&r, 60, 0x0019ed15, "Press 's' to Start");
         return;
     }
     if (g.state == STATE_GAME_OVER) {
@@ -890,29 +886,13 @@ void render()
         //printf("%f %f\n", tx1, tx2);
         float ty1 = 0.0f + (float)((g.frameno-1) / 1) * 1.0;
         float ty2 = ty1 + 1.0;
-        /*
-        if (g.ship[0].vel[0] > 0.0) {
-            float tmp = tx1;
-            tx1 = tx2;
-            tx2 = tmp;
-        }
+        //float w = 40;
+        //float h = 80;
         glBegin(GL_QUADS);
-            //glTexCoord2f( 0, 1); glVertex2f(-g.bees[0].w, -g.bees[0].h);
-            //glTexCoord2f( 0,.8); glVertex2f(-g.bees[0].w,  g.bees[0].h);
-            //glTexCoord2f(.2,.8); glVertex2f( g.bees[0].w,  g.bees[0].h);
-            //glTexCoord2f(.2, 1); glVertex2f( g.bees[0].w, -g.bees[0].h);
             glTexCoord2f(tx1, ty2); glVertex2f(-g.ship[0].w, -g.ship[0].h);
             glTexCoord2f(tx1, ty1); glVertex2f(-g.ship[0].w,  g.ship[0].h);
             glTexCoord2f(tx2, ty1); glVertex2f( g.ship[0].w,  g.ship[0].h);
             glTexCoord2f(tx2, ty2); glVertex2f( g.ship[0].w, -g.ship[0].h);
-        glEnd();*/
-        float w = 40;
-        float h = 80;
-        glBegin(GL_QUADS);
-            glTexCoord2f(tx1, ty2); glVertex2f(-w, -h);
-            glTexCoord2f(tx1, ty1); glVertex2f(-w,  h);
-            glTexCoord2f(tx2, ty1); glVertex2f( w,  h);
-            glTexCoord2f(tx2, ty2); glVertex2f( w, -h);
         glEnd();
         //turn off alpha test
         glBindTexture(GL_TEXTURE_2D, 0);
@@ -943,7 +923,7 @@ void render()
         float bx2 = bx1 + 0.25f;
         //printf("%f %f\n", tx1, tx2);
         float by1 = 0.0f + (float)((g.frameno-1) / 4) * 0.25f;
-        float by2 = by1 + 0.25;
+        float by2 = by1 + 0.25f;
         
         float bw = 30;
         float bh = 35;
@@ -958,43 +938,60 @@ void render()
         glDisable(GL_ALPHA_TEST);
         glPopMatrix();
 
-        //////// Gold Rock /////////////
-  //      glPushMatrix();
-  //      glColor3ub(255, 255, 255);
+        //////// Gem /////////////
+        glPushMatrix();
+        glColor3ub(255, 255, 255);
         //static float move = 1.0f;
-        //glTranslatef(g.blhole[0].pos[0], g.blhole[0].pos[1], 0.0f);
-
-        //glTranslatef(g.xres , 120.0f, 0.0f);
+        //glTranslatef(g.gem[0].pos[0], g.gem[0].pos[1], 0.0f);
+        for(float r=0.0f; r<= 3.0f; r++) {
+            float px = rand() % 100;
+            float py = rand() % 100 + 1;
+            glTranslatef(px, py, 0.0f);
+            //glTranslated(g.gem[0].pos[0], g.gem[0].pos[1], 0.0f);
+        }
+        //glTranslatef(g.xres/2, 150.0f, 0.0f);
+       
+        // glTranslatef(g.xres , 120.0f, 0.0f);
         //set alpha test
         //https://www.khronos.org/registry/OpenGL-Refpages/gl2.1
         ///xhtml/glAlphaFunc.xml
-        //glEnable(GL_ALPHA_TEST);
+        glEnable(GL_ALPHA_TEST);
         //transparent if alpha value is greater than 0.0
-        //glAlphaFunc(GL_GREATER, 0.0f);
+        glAlphaFunc(GL_GREATER, 0.0f);
         //Set 4-channels of color intensity
-  //      glColor4ub(255,255,255,255);
+        glColor4ub(255,255,255,255);
 
         //glBegin(GL_TRIANGLE_FAN)
-  //      glBindTexture(GL_TEXTURE_2D, g.rockid);
+        glBindTexture(GL_TEXTURE_2D, g.gemid);
         //make texture coordinates based on frame number.
-        //float rx1 = 0.0f + (float)((g.frameno-1) % 1) * 1.0f;
-        //float rx2 = rx1 + 1.0f;
+        float rx1 = 0.0f + (float)((g.frameno-1) % 5) * 0.2f;
+        float rx2 = rx1 + 0.2f;
         //printf("%f %f\n", tx1, tx2);
-        //float ry1 = 0.0f + (float)((g.frameno-1) / 1) * 1.0f;
-        //float ry2 = ry1 + 1.0;
+        float ry1 = 0.0f + (float)((g.frameno-1) / 2) * 0.5f;
+        float ry2 = ry1 + 0.5f;
 
-  //      float rw = 10;
-  //      float rh = 15;
-  //          glBegin(GL_QUADS);
-  //              glTexCoord2f(20, 0.5); glVertex2i(-rw, -rh);
-  //              glTexCoord2f(20, 10); glVertex2i(-rw,  rh);
-  //              glTexCoord2f(10, 15); glVertex2i( rw,  rh);
-  //              glTexCoord2f(10, 15); glVertex2i( rw, -rh);
-  //          glEnd();
+        float rw = 17;
+        float rh = 22;
+            glBegin(GL_QUADS);
+                glTexCoord2f(rx1, ry2); glVertex2i(-rw, -rh);
+                glTexCoord2f(rx1, ry1); glVertex2i(-rw,  rh);
+                glTexCoord2f(rx2, ry1); glVertex2i( rw,  rh);
+                glTexCoord2f(rx2, ry2); glVertex2i( rw, -rh);
+            glEnd();
+        /*
+         * for(GLfloat i=10.0; i<= 3.0; i+=1.0){
+                glBegin(GL_QUADS);
+                    glTexCoord2f(rx1, ry2); glVertex2i(-i, -rh);
+                    glTexCoord2f(rx1, ry1); glVertex2i(-rw,  i);
+                    glTexCoord2f(rx2, ry1); glVertex2i( i,  rh);
+                    glTexCoord2f(rx2, ry2); glVertex2i( rw, -i);
+            }
+                glEnd();
+        */
         //turn off alpha test
-  //      glBindTexture(GL_TEXTURE_2D, 0);
-        //glDisable(GL_ALPHA_TEST);
-  //      glPopMatrix();
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glDisable(GL_ALPHA_TEST);
+        glPopMatrix();
 
     }
 }
