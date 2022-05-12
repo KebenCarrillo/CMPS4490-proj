@@ -31,6 +31,8 @@ class Image {
 public:
     int width, height, max;
     char *data;
+    float color[3];
+    float pos[0];
     Image() {}
     Image(const char *fname) {
         bool isPPM = true;
@@ -66,10 +68,10 @@ public:
 //www.deviantart.com/bigbark24/art/Diamond-sprite-sheet-759155287
 //Outerspace Background:
 //https://opengameart.org/content/space-backgrounds-0
-} img("/home/stu/lmoreno/4490/proj/CMPS4490-proj/space.png"), 
-  sprite("/home/stu/lmoreno/4490/proj/CMPS4490-proj/spaceship.png"),
-  blackhole("/home/stu/lmoreno/4490/proj/CMPS4490-proj/blackhole.png"),
-  gem("/home/stu/lmoreno/4490/proj/CMPS4490-proj/gem.png");
+} img("/home/stu/lmoreno/4490/proj/CMPS4490-proj/space.ppm"), 
+  sprite("/home/stu/lmoreno/4490/proj/CMPS4490-proj/spaceship.ppm"),
+  blackhole("/home/stu/lmoreno/4490/proj/CMPS4490-proj/blackhole.ppm"),
+  gem("/home/stu/lmoreno/4490/proj/CMPS4490-proj/gem.ppm");
   //img("/home/stu/kcarrillo/4490/proj/CMPS4490-proj/space.png"),
   //sprite("/home/stu/kcarrillo/4490/proj/CMPS4490-proj/spaceship.png"),
   //blackhole("/home/stu/kcarrillo/4490/proj/CMPS4490-proj/blackhole.png"),
@@ -102,6 +104,7 @@ public:
     Flt vel[3]; //vector
     float w, h;
     Box box[5];
+
     unsigned int color;
     bool alive_or_dead_;
     Flt mass;
@@ -113,7 +116,7 @@ public:
         vel[1] = 0.0;
     }
     Ship(int x, int y) {
-        w = h = 4.0;
+        w = h = 40.0;
         pos[0] = x;
         pos[1] = y;
         vel[0] = 0.0;
@@ -123,7 +126,36 @@ public:
         w = (float)x * 0.05;
         h = w; 
     }
-} control(100,200);
+} gem1(0,0), control(90,250);
+
+//game object
+/*class Gem {
+public:
+    float pos[3]; //vector
+    float vel[3]; //vector
+    float w, h;
+    float color[3];
+    bool alive_or_dead_;
+    Gem() {
+        w = h = 4.0;
+        pos[0] = 1.0;
+        pos[1] = 200.0;
+        vel[0] = 4.0;
+        vel[1] = 0.0;
+    }
+    Gem(int x, int y) {
+        w = h = 40.0;
+        pos[0] = x;
+        pos[1] = y;
+        vel[0] = 0.0;
+        vel[1] = 0.0;
+    }
+    void set_dimensions(int x, int y) {
+        w = (float)x * 0.05;
+        h = w;
+    }
+} gem(500,500);
+*/
 
 enum {
     STATE_TOP,
@@ -138,7 +170,7 @@ enum {
 class Global {
 public:
 	char keys[65536];
-    
+    int show_boxes;
     int xres, yres;
     Ship ship[3];
     Ship blhole[3];
@@ -149,6 +181,7 @@ public:
     float w, h;
     float dir;
     int inside;
+    int collide;
     ////////////////////// 
     int up; 
     int down;
@@ -276,10 +309,12 @@ Global::Global()
     pos[1] = yres/2.0f;
     dir = 1.0f;     //my machine goes too fast so i need to put a small #
     inside = 0;
+    collide = 0;
+    show_boxes = 0;
     gravity = 80.0;
     frameno = 1;
     score = 0;
-    lives = 0;
+    lives = 3;
     state = STATE_INTRO;
     //state2 = STATE_INTRUCTIONS;
     timer = time(NULL);
@@ -405,9 +440,6 @@ void X11_wrapper::check_mouse(XEvent *e)
             if (g.state == STATE_INTRO) {
 
             }
-            //if (g.state == STATE_INSTRUCTIONS) {
-
-            //}
             if (g.state == STATE_PLAY) {
                 if (x >= g.pos[0]-g.w && x <= g.pos[0]+g.w) {
                    if (y >= g.pos[1]-g.w && y <= g.pos[1]+g.w) {
@@ -446,8 +478,6 @@ void X11_wrapper::check_mouse(XEvent *e)
 			savex = e->xbutton.x;
 			savey = e->xbutton.y;
 			//Code placed here will execute whenever the mouse moves.
-
-
 		}
 	}
 }
@@ -475,6 +505,8 @@ int X11_wrapper::check_keys(XEvent *e)
                     g.state = STATE_INSTRUCTIONS;
                 }
                 break;
+            case XK_b:
+                g.show_boxes = !g.show_boxes;
             case XK_2:
                 //Key 2 was pressed
                 //move down
@@ -547,15 +579,6 @@ void init_opengl(void)
     glTexImage2D(GL_TEXTURE_2D, 0, 3, img.width, img.height, 0,
             GL_RGB, GL_UNSIGNED_BYTE, img.data);
 
-    /*
-    //background - planet
-    glGenTextures(1, &g.plid);
-    glBindTexture(GL_TEXTURE_2D, g.plid);
-    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, 3, planet.width, planet.height, 0,
-            GL_RGB, GL_UNSIGNED_BYTE, planet.data);
-    */
     //ship sprite
 
     //make a new data stream, with 4 color components
@@ -647,57 +670,50 @@ void init_opengl(void)
     g.gem[0].set_dimensions(g.xres, g.yres);
     
 }
+#define GRAV 1.0
 
 void physics()
 {
     //accelerate with spacebar
     if (g.keys[XK_space] == 1)
-        control.vel[0] += 1.0;
+        control.vel[0] += GRAV;
     control.vel[0] -= 0.1;
-    //control.pos[1] += control.vel[1];
-    //if (control.pos[1] < 0) {
-    //    control.pos[1] = 0;
-    //    control.vel[1] = 0.0;
-    //}
     // move ship up
     if (g.keys[XK_Up] == 1) 
-        control.vel[1] += 1.0;
+        control.vel[1] += GRAV;
     control.vel[1] -= 0.1;
     control.pos[1] += control.vel[1];
-    if (control.pos[1] < 0) {
-        control.pos[1] = 0;
+    if (control.pos[0] < 35) {
+        control.pos[1] = 35;
         control.vel[1] = 0.0;
     }
     // move ship down
     if (g.keys[XK_Down] == 1)
-        control.vel[1] -= 1.0;
+        control.vel[1] -= GRAV;
     control.vel[1] -= 0.1;
     control.pos[1] += control.vel[1];
-    if (control.pos[1] < 0) {
-        control.pos[1] = 0;
+    if (control.pos[1] < 35) {
+        control.pos[1] = 35;
         control.vel[1] = 0.0;
     }
     // move ship left
     if (g.keys[XK_Left] == 1)
-        control.vel[0] -= 1.0;
+        control.vel[0] -= GRAV;
     control.vel[0] -= 0.1;
     control.pos[0] += control.vel[0];
-    if (control.pos[0] < 0) {
-        control.pos[0] = 0;
+    if (control.pos[0] < 35) {
+        control.pos[0] = 35;
         control.vel[0] = 0.0;
     }
     // move ship right
     if (g.keys[XK_Right] == 1)
-        control.vel[0] += 1.0;
+        control.vel[0] += GRAV;
     control.vel[0] -= 0.1;
     control.pos[0] += control.vel[0];
-    if (control.pos[0] < 0) {
-        control.pos[0] = 0;
+    if (control.pos[0] < 35) {
+        control.pos[0] = 35;
         control.vel[0] = 0.0;
     }
-   
-    
-    
     /*time_t curr_seconds = time(NULL);
     if (curr_seconds != g.timer) {
         //define a line segment
@@ -801,38 +817,6 @@ void render()
         ggprint12(&r, 0, 0x00bfff, "Right-Click to Play Again");
         return;
     }
-    /*r.bot = g.yres - 20;
-    r.left = 10;
-    r.center = 0;
-
-    Rect l;
-    l.bot = g.yres - 20;
-    l.left = 440;
-    l.center = 0;
-
-    Rect t;
-    t.bot = g.yres - 40;
-    t.left = 10;
-    t.center = 0;
-    ggprint8b(&r, 0, 0x00f2faff, "Score: %i ", g.score);
-    ggprint8b(&l, 0, 0x00FF0000, "Lives: %i ", g.lives);
-    ggprint8b(&t, 0, 0x00ACBFFF, "Timer: %i ", g.timer);
-    */
-
-    ///////////////////
-    //velocity doesnt work
-    /*static float move = -100.0f;
-    static float up = 0.0f;
-    static float vel = 2.0f;
-    glTranslatef(g.xres/2 + move, 60.0f + up, 0.0f);
-    //
-    if (g.up) {
-        up += vel;
-        if(up > 100)
-            vel = -vel;
-    }*/
-
-
 	//Draw ship.
 	if (g.state == STATE_PLAY) {
         r.bot = g.yres - 20;
@@ -846,29 +830,13 @@ void render()
         ggprint13(&l, 0, 0x00FF0000, "Lives: %i ", g.lives);
         ggprint12(&r, 0, 0x00ACBFFF, "Countdown: %i", g.playtime - g.countdown);
         
+
         ////// Ship ////////
         glPushMatrix();
         glColor3ub(255, 255, 255);
         //glTranslatef(g.xres/2+20.0f, 60.0f, 0.0f);
-        //static float forward = 0.5f;
-        //velocity doesnt work
-        //static float move = -100.0f;
-        //static float up = 0.0f;
-        //static float vel = 2.0f;
-        
-        //glTranslatef(control.pos[0], control.pos[1], 0.0f);
-        //control.pos[0] = 200;
-        //control.pos[1] = 200;
         glTranslatef(control.pos[0], control.pos[1], 0.0f);
         
-        //
-        //if (g.up) {
-        //    up += vel;
-        //    if(up > 100)
-        //        vel = -vel;
-        //}
-        //glTranslatef(g.ship[0].pos[0]+forward, g.ship[0].pos[1], 0.0f);
-        //forward++; 
         //set alpha test
         //https://www.khronos.org/registry/OpenGL-Refpages/gl2.1
         ///xhtml/glAlphaFunc.xml
@@ -897,8 +865,18 @@ void render()
         //turn off alpha test
         glBindTexture(GL_TEXTURE_2D, 0);
         glDisable(GL_ALPHA_TEST);
-        glPopMatrix();
 
+        //Show the sprite's bounding box
+        if (g.show_boxes) {
+            glColor3ub(255,255,0);
+            glBegin(GL_LINE_LOOP);
+                glVertex2f(-g.ship[0].w, -g.ship[0].h);
+                glVertex2f(-g.ship[0].w,  g.ship[0].h);
+                glVertex2f( g.ship[0].w,  g.ship[0].h);
+                glVertex2f( g.ship[0].w, -g.ship[0].h);
+            glEnd();
+        }
+        glPopMatrix();
 
         ///////// Blackhole ////////
         glPushMatrix();
@@ -921,12 +899,14 @@ void render()
         //make texture coordinates based on frame number.
         float bx1 = 0.0f + (float)((g.frameno-1) % 4) * 0.25f;
         float bx2 = bx1 + 0.25f;
-        //printf("%f %f\n", tx1, tx2);
         float by1 = 0.0f + (float)((g.frameno-1) / 4) * 0.25f;
         float by2 = by1 + 0.25f;
         
         float bw = 30;
         float bh = 35;
+
+        //glTranslatef(Ship.pos[0], Ship.pos[0], 0.0f);
+        //glTranslatef(control.pos[0], control.pos[0], 0.0f);
             glBegin(GL_QUADS);
                 glTexCoord2f(bx1, by2); glVertex2f(-bw, -bh);
                 glTexCoord2f(bx1, by1); glVertex2f(-bw,  bh);
@@ -936,21 +916,23 @@ void render()
         //turn off alpha test
         glBindTexture(GL_TEXTURE_2D, 0);
         glDisable(GL_ALPHA_TEST);
+
+        //Show the sprite's bounding box
+        if (g.show_boxes) {
+            glColor3ub(255,255,0);
+            glBegin(GL_LINE_LOOP);
+                glVertex2f(-bw, -bh);
+                glVertex2f(-bw,  bh);
+                glVertex2f( bw,  bh);
+                glVertex2f( bw, -bh);
+            glEnd();
+        }
         glPopMatrix();
 
         //////// Gem /////////////
         glPushMatrix();
         glColor3ub(255, 255, 255);
-        //static float move = 1.0f;
-        //glTranslatef(g.gem[0].pos[0], g.gem[0].pos[1], 0.0f);
-        for(float r=0.0f; r<= 3.0f; r++) {
-            float px = rand() % 100;
-            float py = rand() % 100 + 1;
-            glTranslatef(px, py, 0.0f);
-            //glTranslated(g.gem[0].pos[0], g.gem[0].pos[1], 0.0f);
-        }
-        //glTranslatef(g.xres/2, 150.0f, 0.0f);
-       
+        glTranslatef(g.xres/2, 180.0f, 0.0f);
         // glTranslatef(g.xres , 120.0f, 0.0f);
         //set alpha test
         //https://www.khronos.org/registry/OpenGL-Refpages/gl2.1
@@ -966,31 +948,48 @@ void render()
         //make texture coordinates based on frame number.
         float rx1 = 0.0f + (float)((g.frameno-1) % 5) * 0.2f;
         float rx2 = rx1 + 0.2f;
-        //printf("%f %f\n", tx1, tx2);
         float ry1 = 0.0f + (float)((g.frameno-1) / 2) * 0.5f;
         float ry2 = ry1 + 0.5f;
 
         float rw = 17;
         float rh = 22;
+        
+        glTranslatef(gem.pos[0], gem.pos[1], 0.0f);
             glBegin(GL_QUADS);
                 glTexCoord2f(rx1, ry2); glVertex2i(-rw, -rh);
                 glTexCoord2f(rx1, ry1); glVertex2i(-rw,  rh);
                 glTexCoord2f(rx2, ry1); glVertex2i( rw,  rh);
                 glTexCoord2f(rx2, ry2); glVertex2i( rw, -rh);
             glEnd();
-        /*
-         * for(GLfloat i=10.0; i<= 3.0; i+=1.0){
-                glBegin(GL_QUADS);
-                    glTexCoord2f(rx1, ry2); glVertex2i(-i, -rh);
-                    glTexCoord2f(rx1, ry1); glVertex2i(-rw,  i);
-                    glTexCoord2f(rx2, ry1); glVertex2i( i,  rh);
-                    glTexCoord2f(rx2, ry2); glVertex2i( rw, -i);
-            }
-                glEnd();
-        */
+
         //turn off alpha test
         glBindTexture(GL_TEXTURE_2D, 0);
         glDisable(GL_ALPHA_TEST);
+        
+        //Show the sprite's bounding box
+        if (g.show_boxes) {
+            glColor3ub(255,255,0);
+            glBegin(GL_LINE_LOOP);
+                glVertex2f(-rw, -rh);
+                glVertex2f(-rw,  rh);
+                glVertex2f( rw,  rh);
+                glVertex2f( rw, -rh);
+                //glVertex2f( rw, -rh);
+            glEnd();
+        }
+        //overlapping sprites, add score
+        int collide = 0;
+        if (control.pos[0] - control.w < g.gem[0].pos[0] + g.gem[0].pos[1] &&
+            control.pos[0] + control.w > g.gem[0].pos[0] + g.gem[0].pos[1])
+        //if (g.gem[0].pos[0] + g.gem[0].w < control.pos[0] - control.w &&
+        //    g.gem[0].pos[0] + g.gem[0].w > control.pos[0] - control.w)
+            collide = 1;
+        if (collide){
+            g.score++;
+            g.lives--;
+        }
+        if(g.lives == 0)
+            g.state = STATE_GAME_OVER;
         glPopMatrix();
 
     }
