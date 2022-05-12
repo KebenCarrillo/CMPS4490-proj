@@ -68,15 +68,14 @@ public:
 //www.deviantart.com/bigbark24/art/Diamond-sprite-sheet-759155287
 //Outerspace Background:
 //https://opengameart.org/content/space-backgrounds-0
-} img("/home/stu/lmoreno/4490/proj/CMPS4490-proj/space.ppm"), 
-  sprite("/home/stu/lmoreno/4490/proj/CMPS4490-proj/spaceship.ppm"),
-  blackhole("/home/stu/lmoreno/4490/proj/CMPS4490-proj/blackhole.ppm"),
-  gem("/home/stu/lmoreno/4490/proj/CMPS4490-proj/gem.ppm");
-  //img("/home/stu/kcarrillo/4490/proj/CMPS4490-proj/space.png"),
-  //sprite("/home/stu/kcarrillo/4490/proj/CMPS4490-proj/spaceship.png"),
-  //blackhole("/home/stu/kcarrillo/4490/proj/CMPS4490-proj/blackhole.png"),
-  //goldrock("/home/stu/kcarrillo/4490/proj/CMPS4490-proj/goldrock.png");
-  //planet("/home/stu/kcarrillo/4490/proj/CMPS4490-proj/planet.png");
+} //img("/home/stu/lmoreno/4490/proj/CMPS4490-proj/space.ppm"), 
+  //sprite("/home/stu/lmoreno/4490/proj/CMPS4490-proj/spaceship.ppm"),
+  //blackhole("/home/stu/lmoreno/4490/proj/CMPS4490-proj/blackhole.ppm"),
+  //gem("/home/stu/lmoreno/4490/proj/CMPS4490-proj/gem.ppm");
+  img("/home/stu/kcarrillo/4490/proj/CMPS4490-proj/space.ppm"),
+  sprite("/home/stu/kcarrillo/4490/proj/CMPS4490-proj/spaceship.ppm"),
+  blackhole("/home/stu/kcarrillo/4490/proj/CMPS4490-proj/blackhole.ppm"),
+  gem("/home/stu/kcarrillo/4490/proj/CMPS4490-proj/gem.ppm");
 
 typedef float Flt;
 typedef Flt Vec[2];
@@ -128,34 +127,51 @@ public:
     }
 } gem1(0,0), control(90,250);
 
-//game object
-/*class Gem {
-public:
-    float pos[3]; //vector
-    float vel[3]; //vector
+class Gem {
+public: 
+    Flt pos[3];
+    Flt vel[3];
+    //Flt gem[5];
     float w, h;
-    float color[3];
+    Box box[5];
+    unsigned int color;
     bool alive_or_dead_;
+    Flt mass;
     Gem() {
-        w = h = 4.0;
-        pos[0] = 1.0;
-        pos[1] = 200.0;
+        w = h = 4.0 + rand() % 5 + 5.0;
+        pos[0] = 300.0 + rand() % 5 + 10.0;
+        pos[1] = 100.0 + rand() % 10 + 15.0;
         vel[0] = 4.0;
-        vel[1] = 0.0;
-    }
-    Gem(int x, int y) {
-        w = h = 40.0;
-        pos[0] = x;
-        pos[1] = y;
-        vel[0] = 0.0;
         vel[1] = 0.0;
     }
     void set_dimensions(int x, int y) {
         w = (float)x * 0.05;
         h = w;
     }
-} gem(500,500);
-*/
+};
+
+class Portal {
+public:
+    Flt pos[3];
+    Flt vel[3];
+    //Flt gem[5];
+    float w, h;
+    Box box[5];
+    unsigned int color;
+    bool alive_or_dead_;
+    Flt mass;
+    Portal() {
+        w = h = 4.0 + rand() % 5 + 5.0;
+        pos[0] = 750.0 + rand() % 5 + 10.0;
+        pos[1] = 100.0 + rand() % 10 + 15.0;
+        vel[0] = 4.0;
+        vel[1] = 0.0;
+    }
+    void set_dimensions(int x, int y) {
+        w = (float)x * 0.05;
+        h = w;
+    }
+};
 
 enum {
     STATE_TOP,
@@ -173,8 +189,8 @@ public:
     int show_boxes;
     int xres, yres;
     Ship ship[3];
-    Ship blhole[3];
-    Ship gem[3];
+    Portal blhole[4];
+    Gem gem[7];
     // the box components
     float pos[2];
     Point p[4];
@@ -879,119 +895,125 @@ void render()
         glPopMatrix();
 
         ///////// Blackhole ////////
-        glPushMatrix();
-        glColor3ub(255, 255, 255);
-        //static float move = 1.0f;
-        //glTranslatef(g.blhole[0].pos[0], g.blhole[0].pos[1], 0.0f);
-        
-        glTranslatef(g.xres/2, 120.0f, 0.0f);        
-        //set alpha test
-        //https://www.khronos.org/registry/OpenGL-Refpages/gl2.1
-        ///xhtml/glAlphaFunc.xml
-        glEnable(GL_ALPHA_TEST);
-        //transparent if alpha value is greater than 0.0
-        glAlphaFunc(GL_GREATER, 0.0f);
-        //Set 4-channels of color intensity
-        glColor4ub(255,255,255,255);
+        for (int i=0; i<5; i++) {
+            glPushMatrix();
+            glColor3ub(255, 255, 255);
+            //static float move = 1.0f;
+            glTranslatef(g.blhole[i].pos[0], g.blhole[i].pos[1], 0.0f);
+            
+            //glTranslatef(g.xres/2, 120.0f, 0.0f);        
+            //set alpha test
+            //https://www.khronos.org/registry/OpenGL-Refpages/gl2.1
+            ///xhtml/glAlphaFunc.xml
+            glEnable(GL_ALPHA_TEST);
+            //transparent if alpha value is greater than 0.0
+            glAlphaFunc(GL_GREATER, 0.0f);
+            //Set 4-channels of color intensity
+            glColor4ub(255,255,255,255);
 
-        //glBegin(GL_TRIANGLE_FAN)
-        glBindTexture(GL_TEXTURE_2D, g.bhid);
-        //make texture coordinates based on frame number.
-        float bx1 = 0.0f + (float)((g.frameno-1) % 4) * 0.25f;
-        float bx2 = bx1 + 0.25f;
-        float by1 = 0.0f + (float)((g.frameno-1) / 4) * 0.25f;
-        float by2 = by1 + 0.25f;
-        
-        float bw = 30;
-        float bh = 35;
+            //glBegin(GL_TRIANGLE_FAN)
+            glBindTexture(GL_TEXTURE_2D, g.bhid);
+            //make texture coordinates based on frame number.
+            float bx1 = 0.0f + (float)((g.frameno-1) % 4) * 0.25f;
+            float bx2 = bx1 + 0.25f;
+            float by1 = 0.0f + (float)((g.frameno-1) / 4) * 0.25f;
+            float by2 = by1 + 0.25f;
+            
+            float bw = 30;
+            float bh = 35;
 
-        //glTranslatef(Ship.pos[0], Ship.pos[0], 0.0f);
-        //glTranslatef(control.pos[0], control.pos[0], 0.0f);
-            glBegin(GL_QUADS);
-                glTexCoord2f(bx1, by2); glVertex2f(-bw, -bh);
-                glTexCoord2f(bx1, by1); glVertex2f(-bw,  bh);
-                glTexCoord2f(bx2, by1); glVertex2f( bw,  bh);
-                glTexCoord2f(bx2, by2); glVertex2f( bw, -bh);
-            glEnd();
-        //turn off alpha test
-        glBindTexture(GL_TEXTURE_2D, 0);
-        glDisable(GL_ALPHA_TEST);
+            //glTranslatef(Ship.pos[0], Ship.pos[0], 0.0f);
+            //glTranslatef(control.pos[0], control.pos[0], 0.0f);
+                glBegin(GL_QUADS);
+                    glTexCoord2f(bx1, by2); glVertex2f(-g.blhole[i].w, -g.blhole[i].h);
+                    glTexCoord2f(bx1, by1); glVertex2f(-g.blhole[i].w,  g.blhole[i].h);
+                    glTexCoord2f(bx2, by1); glVertex2f( g.blhole[i].w,  g.blhole[i].h);
+                    glTexCoord2f(bx2, by2); glVertex2f( g.blhole[i].w, -g.blhole[i].h);
+                glEnd();
+            //turn off alpha test
+            glBindTexture(GL_TEXTURE_2D, 0);
+            glDisable(GL_ALPHA_TEST);
 
-        //Show the sprite's bounding box
-        if (g.show_boxes) {
-            glColor3ub(255,255,0);
-            glBegin(GL_LINE_LOOP);
-                glVertex2f(-bw, -bh);
-                glVertex2f(-bw,  bh);
-                glVertex2f( bw,  bh);
-                glVertex2f( bw, -bh);
-            glEnd();
+            //Show the sprite's bounding box
+            if (g.show_boxes) {
+                glColor3ub(255,255,0);
+                glBegin(GL_LINE_LOOP);
+                    glVertex2f(-bw, -bh);
+                    glVertex2f(-bw,  bh);
+                    glVertex2f( bw,  bh);
+                    glVertex2f( bw, -bh);
+                glEnd();
+            }
+            glPopMatrix();
         }
-        glPopMatrix();
 
         //////// Gem /////////////
-        glPushMatrix();
-        glColor3ub(255, 255, 255);
-        glTranslatef(g.xres/2, 180.0f, 0.0f);
-        // glTranslatef(g.xres , 120.0f, 0.0f);
-        //set alpha test
-        //https://www.khronos.org/registry/OpenGL-Refpages/gl2.1
-        ///xhtml/glAlphaFunc.xml
-        glEnable(GL_ALPHA_TEST);
-        //transparent if alpha value is greater than 0.0
-        glAlphaFunc(GL_GREATER, 0.0f);
-        //Set 4-channels of color intensity
-        glColor4ub(255,255,255,255);
+        for (int i=0; i<5; i++) {
+            glPushMatrix();
+            glColor3ub(255, 255, 255);
+            glTranslatef(g.gem[i].pos[i], g.gem[i].pos[i], 0.0f);
+            //glTranslatef(g.xres/2, 180.0f, 0.0f);
+            
+            // glTranslatef(g.xres , 120.0f, 0.0f);
+            //set alpha test
+            //https://www.khronos.org/registry/OpenGL-Refpages/gl2.1
+            ///xhtml/glAlphaFunc.xml
+            glEnable(GL_ALPHA_TEST);
+            //transparent if alpha value is greater than 0.0
+            glAlphaFunc(GL_GREATER, 0.0f);
+            //Set 4-channels of color intensity
+            glColor4ub(255,255,255,255);
 
-        //glBegin(GL_TRIANGLE_FAN)
-        glBindTexture(GL_TEXTURE_2D, g.gemid);
-        //make texture coordinates based on frame number.
-        float rx1 = 0.0f + (float)((g.frameno-1) % 5) * 0.2f;
-        float rx2 = rx1 + 0.2f;
-        float ry1 = 0.0f + (float)((g.frameno-1) / 2) * 0.5f;
-        float ry2 = ry1 + 0.5f;
+            //glBegin(GL_TRIANGLE_FAN)
+            glBindTexture(GL_TEXTURE_2D, g.gemid);
+            //make texture coordinates based on frame number.
+            float rx1 = 0.0f + (float)((g.frameno-1) % 5) * 0.2f;
+            float rx2 = rx1 + 0.2f;
+            float ry1 = 0.0f + (float)((g.frameno-1) / 2) * 0.5f;
+            float ry2 = ry1 + 0.5f;
 
-        float rw = 17;
-        float rh = 22;
-        
-        glTranslatef(gem.pos[0], gem.pos[1], 0.0f);
+            float rw = 17;
+            float rh = 22;
+            //for (int i=0; i<5; i++) {
+                //glTranslatef(gem.pos[0], gem.pos[1], 0.0f);
             glBegin(GL_QUADS);
-                glTexCoord2f(rx1, ry2); glVertex2i(-rw, -rh);
-                glTexCoord2f(rx1, ry1); glVertex2i(-rw,  rh);
-                glTexCoord2f(rx2, ry1); glVertex2i( rw,  rh);
-                glTexCoord2f(rx2, ry2); glVertex2i( rw, -rh);
+                glTexCoord2f(rx1, ry2); glVertex2i(-g.gem[i].w,  -g.gem[i].h);
+                glTexCoord2f(rx1, ry1); glVertex2i(-g.gem[i].w,   g.gem[i].h);
+                glTexCoord2f(rx2, ry1); glVertex2i( g.gem[i].w,   g.gem[i].h);
+                glTexCoord2f(rx2, ry2); glVertex2i( g.gem[i].w,  -g.gem[i].h);
             glEnd();
+            //}
+            //turn off alpha test
+            glBindTexture(GL_TEXTURE_2D, 0);
+            glDisable(GL_ALPHA_TEST);
+            
+            //Show the sprite's bounding box
+            if (g.show_boxes) {
+                glColor3ub(255,255,0);
+                glBegin(GL_LINE_LOOP);
+                    glVertex2f(-rw, -rh);
+                    glVertex2f(-rw,  rh);
+                    glVertex2f( rw,  rh);
+                    glVertex2f( rw, -rh);
+                    //glVertex2f( rw, -rh);
+                glEnd();
+            }
+            //overlapping sprites, add score
+            int collide = 0;
+            if (control.pos[0] - control.w < g.gem[0].pos[0] + g.gem[0].pos[1] &&
+                control.pos[0] + control.w > g.gem[0].pos[0] + g.gem[0].pos[1])
+            //if (g.gem[0].pos[0] + g.gem[0].w < control.pos[0] - control.w &&
+            //    g.gem[0].pos[0] + g.gem[0].w > control.pos[0] - control.w)
+                collide = 1;
+            if (collide){
+                g.score++;
+                g.lives--;
+            }
+            if(g.lives == 0)
+                g.state = STATE_GAME_OVER;
+            glPopMatrix();
 
-        //turn off alpha test
-        glBindTexture(GL_TEXTURE_2D, 0);
-        glDisable(GL_ALPHA_TEST);
-        
-        //Show the sprite's bounding box
-        if (g.show_boxes) {
-            glColor3ub(255,255,0);
-            glBegin(GL_LINE_LOOP);
-                glVertex2f(-rw, -rh);
-                glVertex2f(-rw,  rh);
-                glVertex2f( rw,  rh);
-                glVertex2f( rw, -rh);
-                //glVertex2f( rw, -rh);
-            glEnd();
         }
-        //overlapping sprites, add score
-        int collide = 0;
-        if (control.pos[0] - control.w < g.gem[0].pos[0] + g.gem[0].pos[1] &&
-            control.pos[0] + control.w > g.gem[0].pos[0] + g.gem[0].pos[1])
-        //if (g.gem[0].pos[0] + g.gem[0].w < control.pos[0] - control.w &&
-        //    g.gem[0].pos[0] + g.gem[0].w > control.pos[0] - control.w)
-            collide = 1;
-        if (collide){
-            g.score++;
-            g.lives--;
-        }
-        if(g.lives == 0)
-            g.state = STATE_GAME_OVER;
-        glPopMatrix();
-
     }
 }
 
